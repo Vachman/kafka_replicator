@@ -1,0 +1,26 @@
+PATH
+  remote: .
+  specs:
+    kafka_replicator (0.1.0)
+      json
+      ruby-kafka (~> 0.7.5)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    digest-crc (0.4.1)
+    json (2.2.0)
+    rake (10.5.0)
+    ruby-kafka (0.7.6)
+      digest-crc
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.17)
+  kafka_replicator!
+  rake (~> 10.0)
+
+BUNDLED WITH
+   1.17.3
