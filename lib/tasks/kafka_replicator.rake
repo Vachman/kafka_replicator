@@ -11,9 +11,14 @@ namespace :kafka_replicator do
 
     puts "Replicating from #{source_brokers} to #{destination_brokers}"
 
-    KafkaReplicator::TopicsReplicator.new(
+    replicator = KafkaReplicator::TopicsReplicator.new(
       source_brokers: source_brokers, 
       destination_brokers: destination_brokers
-    ).start 
+    )
+
+    trap("TERM") { replicator.stop }
+    trap("INT") { replicator.stop }
+    
+    replicator.start
   end
 end
