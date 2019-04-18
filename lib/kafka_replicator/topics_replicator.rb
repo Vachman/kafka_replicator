@@ -56,14 +56,11 @@ module KafkaReplicator
 
     def replicate
       source_consumer.each_batch(automatically_mark_as_processed: false) do |batch|
-        puts "Received batch: #{batch.topic}/#{batch.partition}"
         puts 'New topics added, restarting...' && break unless new_topics.empty?
 
         batch.messages.each_slice(100).each do |messages|
 
           messages.each do |message|
-            puts "m #{message.topic}/#{message.partition}/#{message.offset}"
-            
             destination_producer.produce(
               message.value,
               topic: destination_topic(message.topic),
