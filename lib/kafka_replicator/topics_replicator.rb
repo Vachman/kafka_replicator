@@ -1,15 +1,19 @@
 module KafkaReplicator
   class TopicsReplicator
+    SKIP_TOPICS = ['__consumer_offse', '__consumer_offsets', '_schemas']
+
     attr_reader :source_kafka,
                 :destination_kafka,
                 :source_consumer,
                 :destination_producer,
                 :replicated_topics
+		:skip_topics
 
-    def initialize(source_brokers:, destination_brokers:)
+    def initialize(source_brokers:, destination_brokers:, skip_topics: [])
       @source_brokers = source_brokers
       @destination_brokers = destination_brokers
       @replicated_topics = Set[]
+      @skip_topics = SKIP_TOPICS | skip_topics
     end
 
     def source_kafka
@@ -47,7 +51,7 @@ module KafkaReplicator
       puts e
       puts e.cause.inspect
     end
-    
+
     def stop
       source_consumer.stop
     end
@@ -56,14 +60,22 @@ module KafkaReplicator
 
     def replicate
       source_consumer.each_batch(automatically_mark_as_processed: false) do |batch|
-        puts 'New topics added, restarting...' && break unless new_topics.empty?
+        puts 'New topics added, restarting...' && break unless unreplicated_topics.empty?
 
         batch.messages.each_slice(100).each do |messages|
-
           messages.each do |message|
+            value = MultiJson.load(message.value, symbolize_keys: true)
+
+            # skip already replicated messages
+            # prevents loops in two way replication scenario
+            next if value.has_key?(:replica)
+
+            # mark message as a replica
+            value[:replica] = true
+
             destination_producer.produce(
-              message.value,
-              topic: destination_topic(message.topic),
+              MultiJson.dump(vaule),
+              topic: message.topic,
               partition: message.partition
             )
           end
@@ -75,24 +87,23 @@ module KafkaReplicator
     end
 
     def source_topics
-      source_kafka.topics.select { |topic_name| topic_name.end_with?('replica') }.to_set
+      source_kafka.topics.reject { |topic_name| skip_topics.include?(topic_name) }.to_set
     end
 
-    def new_topics
+    def unreplicated_topics
       source_topics - replicated_topics
     end
 
     def subscribe_to_source_topics
       destination_topics = destination_kafka.topics
 
-      new_topics.each do |topic|
+      unreplicated_topics.each do |topic|
         source_consumer.subscribe(topic, start_from_beginning: false)
         replicated_topics << topic
-        destination_topic_name = destination_topic(topic)
 
-        unless destination_topics.include?(destination_topic_name)
+        unless destination_topics.include?(topic)
           destination_kafka.create_topic(
-            destination_topic_name,
+            topic,
             num_partitions: source_kafka.partitions_for(topic),
             replication_factor: 3 # Need to be specified because otherwise ruby-kafa driver will make it equal to 1
           )
@@ -100,10 +111,6 @@ module KafkaReplicator
 
         puts "Topic added: #{topic}"
       end
-    end
-
-    def destination_topic(topic_name)
-      topic_name.chomp('_replica')
     end
   end
 end
