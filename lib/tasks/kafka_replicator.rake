@@ -12,7 +12,7 @@ namespace :kafka_replicator do
     skip_topics = (ENV['KAFKA_REPLICATOR_SKIP_TOPICS'] && MultiJson.load(ENV['KAFKA_REPLICATOR_SKIP_TOPICS'])) || []
 
     puts "Replicating from #{source_brokers} to #{destination_brokers}"
-    puts "Skipping topics: #{skip_topics}"
+    puts "Skipping topics: #{(KafkaReplicator::TopicsReplicator::SKIP_TOPICS | skip_topics).sort}"
 
     replicator = KafkaReplicator::TopicsReplicator.new(
       source_brokers: source_brokers, 
