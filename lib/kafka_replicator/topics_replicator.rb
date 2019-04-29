@@ -6,7 +6,7 @@ module KafkaReplicator
                 :destination_kafka,
                 :source_consumer,
                 :destination_producer,
-                :replicated_topics
+                :replicated_topics,
 		:skip_topics
 
     def initialize(source_brokers:, destination_brokers:, skip_topics: [])
@@ -74,7 +74,7 @@ module KafkaReplicator
             value[:replica] = true
 
             destination_producer.produce(
-              MultiJson.dump(vaule),
+              MultiJson.dump(value),
               topic: message.topic,
               partition: message.partition
             )
