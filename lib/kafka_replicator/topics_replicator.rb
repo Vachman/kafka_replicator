@@ -39,20 +39,18 @@ module KafkaReplicator
     end
 
     def start
-      loop do
-        puts 'Adding topics for replication...'
-        subscribe_to_source_topics
+      puts 'Adding topics for replication...'
+      subscribe_to_source_topics
 
-        puts 'Strting replication...'
-        replicate
-      end
-
+      puts 'Starting replication...'
+      replicate
     rescue => e
       puts e
       puts e.cause.inspect
     end
 
     def stop
+      puts 'Stopping replication...'
       source_consumer.stop
     end
 
