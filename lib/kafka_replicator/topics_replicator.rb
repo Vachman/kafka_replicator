@@ -76,7 +76,9 @@ module KafkaReplicator
               topic: message.topic,
               partition: message.partition
             )
-          end
+
+            source_consumer.mark_message_as_processed(message)
+	  end
 
           destination_producer.deliver_messages
           source_consumer.commit_offsets
