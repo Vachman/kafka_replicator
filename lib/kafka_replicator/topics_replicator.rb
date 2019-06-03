@@ -7,7 +7,7 @@ module KafkaReplicator
                 :source_consumer,
                 :destination_producer,
                 :replicated_topics,
-		:skip_topics
+                :skip_topics
 
     def initialize(source_brokers:, destination_brokers:, skip_topics: [])
       @source_brokers = source_brokers
@@ -39,9 +39,9 @@ module KafkaReplicator
     end
 
     def start
-      loop { subscribe_and_replicate }	      
+      loop { subscribe_and_replicate }
     end
-    
+
     def subscribe_and_replicate
       puts 'Adding topics for replication...'
       subscribe_to_source_topics
@@ -51,8 +51,8 @@ module KafkaReplicator
     rescue => e
       puts "Exception: #{e}"
       puts "Exception.cause: #{e.cause.inspect}"
-    end 
-	    
+    end
+
     def stop
       puts 'Stopping replication...'
       source_consumer.stop
@@ -66,12 +66,12 @@ module KafkaReplicator
 
         batch.messages.each_slice(100).each do |messages|
           messages.each do |message|
-      	    value = parse_message(message.value)      
+            value = parse_message(message.value)
 
-            # Currently we support only JSON messages so if for some reson there is a message 
-            # which is not a json we just skip it in order to continue replication    
+            # Currently we support only JSON messages so if for some reson there is a message
+            # which is not a json we just skip it in order to continue replication
             next if value.kind_of?(Exception)
-            
+
             # skip already replicated messages
             # prevents loops in two way replication scenario
             next if value.has_key?(:replica)
@@ -86,12 +86,12 @@ module KafkaReplicator
             )
 
             source_consumer.mark_message_as_processed(message)
-	        end
+          end
 
           destination_producer.deliver_messages
           source_consumer.commit_offsets
           print '.'
-	      end
+        end
       end
     end
 
@@ -99,10 +99,10 @@ module KafkaReplicator
       MultiJson.load(value, symbolize_keys: true)
     rescue MultiJson::ParseError => exception
       puts exception.cause
-      
+
       exception
     end
-	    
+
     def source_topics
       source_kafka.topics.reject { |topic_name| skip_topics.include?(topic_name) }.to_set
     end
