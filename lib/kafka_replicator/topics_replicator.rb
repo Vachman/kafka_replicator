@@ -8,12 +8,14 @@ module KafkaReplicator
                 :destination_producer,
                 :replicated_topics,
                 :skip_topics,
+                :logger,
                 :stopped
 
     def initialize(source_brokers:, destination_brokers:, skip_topics: [])
       @source_brokers = source_brokers
       @destination_brokers = destination_brokers
-      @skip_topics = SKIP_TOPICS | skip_topics
+      @skip_topics = SKIP_TOPICS | skip_topicsi
+      @logger = Logger.new(STDOUT)
     end
 
     def setup
@@ -49,13 +51,13 @@ module KafkaReplicator
       loop do
         break if stopped
 
-        puts 'Setting up configuration...'
+        logger.info 'Setting up configuration...'
         setup
 
-        puts 'Adding topics for replication...'
+        logger.info 'Adding topics for replication...'
         subscribe_to_source_topics
 
-        puts 'Starting replication...'
+        logger.info 'Starting replication...'
         replicate
       end
     end
@@ -63,12 +65,12 @@ module KafkaReplicator
     def replicate
       replicate
     rescue => e
-      puts "Exception: #{e}"
-      puts "Exception.cause: #{e.cause.inspect}"
+      logger.error "Exception: #{e}"
+      logger.error "Exception.cause: #{e.cause.inspect}"
     end
 
     def stop
-      puts 'Stopping replication...'
+      logger.info 'Stopping replication...'
       source_consumer.stop
       @stopped = true
     end
@@ -77,7 +79,7 @@ module KafkaReplicator
 
     def replicate
       source_consumer.each_batch(automatically_mark_as_processed: false) do |batch|
-        puts 'New topics added, restarting...' && break unless unreplicated_topics.empty?
+        logger.info 'New topics added, restarting...' && break unless unreplicated_topics.empty?
 
         batch.messages.each_slice(100).each do |messages|
           messages.each do |message|
@@ -113,7 +115,7 @@ module KafkaReplicator
     def parse_message(value)
       MultiJson.load(value, symbolize_keys: true)
     rescue MultiJson::ParseError => exception
-      puts exception.cause
+      logger.error exception.cause
 
       exception
     end
@@ -141,7 +143,7 @@ module KafkaReplicator
           )
         end
 
-        puts "Topic added: #{topic}"
+        logger.info "Topic added: #{topic}"
       end
     end
   end
