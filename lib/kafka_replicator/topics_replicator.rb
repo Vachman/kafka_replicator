@@ -14,7 +14,7 @@ module KafkaReplicator
     def initialize(source_brokers:, destination_brokers:, skip_topics: [])
       @source_brokers = source_brokers
       @destination_brokers = destination_brokers
-      @skip_topics = SKIP_TOPICS | skip_topicsi
+      @skip_topics = SKIP_TOPICS | skip_topics
       @logger = Logger.new(STDOUT)
     end
 
