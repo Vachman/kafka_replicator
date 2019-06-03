@@ -66,8 +66,12 @@ module KafkaReplicator
 
         batch.messages.each_slice(100).each do |messages|
           messages.each do |message|
-            value = MultiJson.load(message.value, symbolize_keys: true)
+      	    value = parse_message(message.value)      
 
+            # Currently we support only JSON messages so if for some reson there is a message 
+            # which is not a json we just skip it in order to continue replication    
+            next if value.kind_of?(Exception)
+            
             # skip already replicated messages
             # prevents loops in two way replication scenario
             next if value.has_key?(:replica)
@@ -82,15 +86,23 @@ module KafkaReplicator
             )
 
             source_consumer.mark_message_as_processed(message)
-	  end
+	        end
 
           destination_producer.deliver_messages
           source_consumer.commit_offsets
           print '.'
-	end
+	      end
       end
     end
 
+    def parse_message(value)
+      MultiJson.load(value, symbolize_keys: true)
+    rescue MultiJson::ParseError => exception
+      puts exception.cause
+      
+      exception
+    end
+	    
     def source_topics
       source_kafka.topics.reject { |topic_name| skip_topics.include?(topic_name) }.to_set
     end
