@@ -82,7 +82,8 @@ module KafkaReplicator
 
           destination_producer.deliver_messages
           source_consumer.commit_offsets
-        end
+          print '.'
+	end
       end
     end
 
@@ -98,7 +99,7 @@ module KafkaReplicator
       destination_topics = destination_kafka.topics
 
       unreplicated_topics.each do |topic|
-        source_consumer.subscribe(topic, start_from_beginning: false)
+        source_consumer.subscribe(topic, start_from_beginning: true)
         replicated_topics << topic
 
         unless destination_topics.include?(topic)
