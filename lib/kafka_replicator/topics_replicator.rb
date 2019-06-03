@@ -7,13 +7,20 @@ module KafkaReplicator
                 :source_consumer,
                 :destination_producer,
                 :replicated_topics,
-                :skip_topics
+                :skip_topics,
+                :stopped
 
     def initialize(source_brokers:, destination_brokers:, skip_topics: [])
       @source_brokers = source_brokers
       @destination_brokers = destination_brokers
-      @replicated_topics = Set[]
       @skip_topics = SKIP_TOPICS | skip_topics
+    end
+
+    def setup
+      @stopped = false
+      @replicated_topics = Set[]
+      @source_consumer = nil
+      @destination_producer = nil
     end
 
     def source_kafka
@@ -39,14 +46,21 @@ module KafkaReplicator
     end
 
     def start
-      loop { subscribe_and_replicate }
+      loop do
+        break if stopped
+
+        puts 'Setting up configuration...'
+        setup
+
+        puts 'Adding topics for replication...'
+        subscribe_to_source_topics
+
+        puts 'Starting replication...'
+        replicate
+      end
     end
 
-    def subscribe_and_replicate
-      puts 'Adding topics for replication...'
-      subscribe_to_source_topics
-
-      puts 'Starting replication...'
+    def replicate
       replicate
     rescue => e
       puts "Exception: #{e}"
@@ -56,6 +70,7 @@ module KafkaReplicator
     def stop
       puts 'Stopping replication...'
       source_consumer.stop
+      @stopped = true
     end
 
     private
