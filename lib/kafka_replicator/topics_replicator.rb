@@ -91,7 +91,10 @@ module KafkaReplicator
 
             # skip already replicated messages
             # prevents loops in two way replication scenario
-            next if value.has_key?(:replica)
+            if value.has_key?(:replica)
+              print('-')
+              next
+            end
 
             # mark message as a replica
             value[:replica] = true
@@ -103,11 +106,11 @@ module KafkaReplicator
             )
 
             source_consumer.mark_message_as_processed(message)
+            print '.'
           end
 
           destination_producer.deliver_messages
           source_consumer.commit_offsets
-          print '.'
         end
       end
     end
