@@ -2,7 +2,7 @@ require 'multi_json'
 
 namespace :kafka_replicator do
   desc 'Start topics replicator'
-  task replicate_topics: :environment do |task, _|
+  task :replicate_topics do |task, _|
     source_brokers = ENV['KAFKA_REPLICATOR_SOURCE_BROKERS'] && MultiJson.load(ENV['KAFKA_REPLICATOR_SOURCE_BROKERS'])
     raise "KAFKA_REPLICATOR_SOURCE_BROKERS environment variable is not set" unless source_brokers
 
