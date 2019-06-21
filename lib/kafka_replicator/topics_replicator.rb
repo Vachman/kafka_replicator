@@ -93,7 +93,6 @@ module KafkaReplicator
             # prevents loops in two way replication scenario
             if value.has_key?(:replica)
               source_consumer.mark_message_as_processed(message)
-              print('-')
               next
             end
 
@@ -107,7 +106,6 @@ module KafkaReplicator
             )
 
             source_consumer.mark_message_as_processed(message)
-            print '.'
           end
 
           destination_producer.deliver_messages
