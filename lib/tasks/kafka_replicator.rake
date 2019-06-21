@@ -1,4 +1,5 @@
 require 'multi_json'
+require 'kafka_replicator'
 
 namespace :kafka_replicator do
   desc 'Start topics replicator'
