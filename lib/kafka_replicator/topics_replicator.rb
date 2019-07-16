@@ -1,7 +1,8 @@
 module KafkaReplicator
   class TopicsReplicator
     SKIP_TOPICS = ['__consumer_offse', '__consumer_offsets', '_schemas']
-
+    REPLICA_TAG = '"replica":true, '.freeze
+    
     attr_reader :source_kafka,
                 :destination_kafka,
                 :source_consumer,
@@ -83,24 +84,15 @@ module KafkaReplicator
 
         batch.messages.each_slice(100).each do |messages|
           messages.each do |message|
-            value = parse_message(message.value)
-
-            # Currently we support only JSON messages so if for some reson there is a message
-            # which is not a json we just skip it in order to continue replication
-            next if value.kind_of?(Exception)
-
             # skip already replicated messages
             # prevents loops in two way replication scenario
-            if value.has_key?(:replica)
+            if replica?(message.value)
               source_consumer.mark_message_as_processed(message)
               next
             end
-
-            # mark message as a replica
-            value[:replica] = true
-
+  
             destination_producer.produce(
-              MultiJson.dump(value),
+              mark_as_replica(message.value),
               topic: message.topic,
               partition: message.partition
             )
@@ -114,14 +106,14 @@ module KafkaReplicator
       end
     end
 
-    def parse_message(value)
-      MultiJson.load(value, symbolize_keys: true)
-    rescue MultiJson::ParseError => exception
-      logger.error exception.cause
-
-      exception
+    def replica?(value)
+      value[1..REPLICA_TAG.size] == REPLICA_TAG
     end
 
+    def mark_as_replica(value)
+      value.dup.insert(1, REPLICA_TAG)
+    end
+      
     def source_topics
       source_kafka.topics.reject { |topic_name| skip_topics.include?(topic_name) }.to_set
     end
