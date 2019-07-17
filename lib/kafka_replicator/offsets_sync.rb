@@ -84,6 +84,7 @@ module KafkaReplicator
         partitions.each do |partition, info|
           delta = info[:source_producer_offset] - info[:destination_producer_offset]
           info[:destination_consumer_offsets] = info[:source_consumer_offset] - delta
+          logger.info "Calculated offset for: #{topic}/#{partition} (#{info[:source_consumer_offset]} -> #{info[:destination_consumer_offsets]})"
         end
       end
     end
@@ -95,7 +96,7 @@ module KafkaReplicator
         destination_consumer.subscribe(topic)
         partitions.each do |partition, info|
           offset = info[:destination_consumer_offsets]
-          logger.info "Seeking consumer offset for: #{m.topic}/#{m.partition} to #{offset}"
+          logger.info "Seeking consumer offset for: #{topic}/#{partition} to #{offset}"
           destination_consumer.seek(topic, partition, offset)
         end
       end
