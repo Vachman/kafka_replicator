@@ -94,7 +94,8 @@ module KafkaReplicator
             destination_producer.produce(
               mark_as_replica(message.value),
               topic: message.topic,
-              partition: message.partition
+              partition: message.partition,
+              key: message.key
             )
 
             source_consumer.mark_message_as_processed(message)
