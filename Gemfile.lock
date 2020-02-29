@@ -2,17 +2,15 @@ PATH
   remote: .
   specs:
     kafka_replicator (0.1.0)
-      json
-      ruby-kafka (~> 0.7.5)
+      multi_json (~> 1.0)
+      ruby-kafka (~> 0.6.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    digest-crc (0.4.1)
-    json (2.2.0)
-    rake (10.5.0)
-    ruby-kafka (0.7.6)
-      digest-crc
+    multi_json (1.14.1)
+    rake (13.0.1)
+    ruby-kafka (0.6.8)
 
 PLATFORMS
   ruby
@@ -20,7 +18,7 @@ PLATFORMS
 DEPENDENCIES
   bundler (~> 1.17)
   kafka_replicator!
-  rake (~> 10.0)
+  rake (~> 13.0)
 
 BUNDLED WITH
    1.17.3
